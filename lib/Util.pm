@@ -1,11 +1,13 @@
 package Util;
 use common::sense;
-
+use feature qw(state say);
 use XML::Atom::Client;
 use URI::Escape qw(uri_escape_utf8);
 use AnyEvent;
 use AnyEvent::HTTP;
 use Data::Dumper::Concise;
+use Config::Pit;
+use Net::Twitter::Lite::WithAPIv1_1;
 
 my $DEBUG = 1;
 
@@ -14,10 +16,12 @@ sub debug($) { say $_[0] if $DEBUG }
 
 my $BASE_URL = 'http://b.hatena.ne.jp/Cside/atomfeed?tag=' . uri_escape_utf8('あとで読む');
 
-my $count = get_unread_count();
-my @urls = get_urls($count);
-my @atoms = fetch_atoms(@urls);
-my @ids = get_ids_by_atoms(@atoms);
+sub main {
+    my $count = get_unread_count();
+    my @urls = get_urls($count);
+    my @atoms = fetch_atoms(@urls);
+    my @ids = get_ids_by_atoms(@atoms);
+}
 
 sub get_unread_count {
     my $parser = XML::Atom::Client->new;
@@ -84,6 +88,26 @@ sub get_ids_by_atoms {
         }
     }
     return @ids;
+}
+
+sub tweet {
+    my ($msg) = @_;
+
+    state $config = pit_get('cside.twitter.com', require => {
+        consumer_key        => 'consumer_key',
+        consumer_secret     => 'consumer_secret',
+        access_token        => 'access_token',
+        access_token_secret => 'access_token_secret',
+    });
+    state $nt = Net::Twitter::Lite::WithAPIv1_1->new(
+        consumer_key        => $config->{consumer_key},
+        consumer_secret     => $config->{consumer_secret},
+        access_token        => $config->{access_token},
+        access_token_secret => $config->{access_token_secret},
+        ssl                 => 1,
+    );
+
+    $nt->update($msg);
 }
 
 1;
