@@ -1,4 +1,4 @@
-package Util;
+package Midoku::Utils;
 use common::sense;
 use feature qw(state say);
 use XML::Atom::Client;
@@ -8,6 +8,16 @@ use AnyEvent::HTTP;
 use Data::Dumper::Concise;
 use Config::Pit;
 use Net::Twitter::Lite::WithAPIv1_1;
+use parent qw(Exporter);
+
+our @EXPORT_OK = qw(
+    get_unread_count
+    get_urls
+    fetch_atoms
+    get_ids_by_atoms
+
+    tweet
+);
 
 my $DEBUG = 1;
 
@@ -107,6 +117,7 @@ sub tweet {
         ssl                 => 1,
     );
 
+    say $msg;
     $nt->update($msg);
 }
 
